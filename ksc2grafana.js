@@ -79,7 +79,12 @@ function main (configFile, cmd) {
           console.error(err.message);
           return;
         } else {
-          await processKscConfiguration(ksc);
+          if (!ksc['ReportsList']) {
+            console.error('ERROR: The provided XML is not a KSC Configuration XML file.');
+            return;
+          } else {
+            await processKscConfiguration(ksc);
+          }
         }
       });
     }
