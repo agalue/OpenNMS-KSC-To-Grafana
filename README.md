@@ -8,7 +8,7 @@ It won't generate the graphs exactly as they are displayed by RRDtool or Backshi
 
 ## Installation
 
-It is recommended to use [NodeJS](https://nodejs.org/en/) or greater with this project, as the code uses several ES6/ES7 features.
+It is recommended to use [NodeJS](https://nodejs.org/en/) version 8 or greater with this project, as the code uses several ES6/ES7 features.
 
 ```SHELL
 npm install
