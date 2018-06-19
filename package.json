@@ -1,0 +1,18 @@
+{
+  "name": "ksc2grafana",
+  "version": "1.0.0",
+  "description": "A tool to convert OpenNMS KSC Reports to Grafana Dashboards",
+  "main": "ksc2grafana.js",
+  "author": "Alejandro Galue <agalue@opennms.org>",
+  "license": "MIT",
+  "bin": {
+    "ksc2grafana": "./ksc2grafana.js"
+  },
+  "dependencies": {
+    "axios": "^0.18.0",
+    "backshift": "https://github.com/OpenNMS/backshift.git#master",
+    "commander": "^2.15.1",
+    "grafana-dash-gen": "^2.5.0",
+    "xml2js": "^0.4.19"
+  }
+}
