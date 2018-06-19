@@ -1,6 +1,10 @@
 # OpenNMS-KSC-To-Grafana
 
-Convert OpenNMS KSC Reports to Grafana Dashboards
+Convert OpenNMS KSC Reports to Grafana Dashboards.
+
+Tested against Grafana 4.x and 5.x; although the tool provides information about the generated dashboard on the standard output only on Grafana 5.x.
+
+It won't generate the graphs exactly as they are displayed by RRDtool or Backshift, as Grafana works on a different way, but the resulting charts should look very similar.
 
 ## Installation
 
@@ -29,3 +33,11 @@ $ ksc2grafana
     -P, --grafana_passwd <grafana_passwd>  Grafana ReST API user password (default: admin)
     -h, --help                             output usage information
 ```
+
+There is one mandatory argument, the full path to the KSC report configuration file `$OPENNMS_HOME/etc/ksc-performance-reports.xml`.
+
+All the options are optional, and they have to be overriden if the script is executed outside the OpenNMS server, and when Grafana is running on a different server.
+
+## Future enhancements
+
+* Use the information available on the template model to add the title for the Y-Axis, the colors for the series, and the series type (line, area, etc.)
