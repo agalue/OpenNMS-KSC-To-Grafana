@@ -50,8 +50,11 @@ async function processKscConfiguration(ksc) {
     onmsGraphTemplates = await fetchGraphTemplates(ksc);
 
     // Processing each KSC report
-    let promises  = [];
-    ksc.ReportsList.Report.forEach(r => promises.push(processReport(r)));
+    let promises = [];
+    ksc.ReportsList.Report.forEach(r => {
+      const dashboard = processReport(r);
+      promises.push(saveDashboard(dashboard));
+    });
     return Promise.all(promises);
   } else {
     console.warn('WARN: There are no reports on the configuration file.');
@@ -121,7 +124,7 @@ async function saveDashboard(dashboard) {
  * 
  * @param {object} report The KSC report object
  */
-async function processReport(report) {
+function processReport(report) {
   const title = report['$'].title;
   console.log(`Creating dashboard for report ${title}...`);
   var graphsPerLine = parseInt(report['$'].graphs_per_line);
@@ -139,7 +142,7 @@ async function processReport(report) {
     }
     dashboard.addRow(row);
   }
-  return saveDashboard(dashboard.generate());
+  return dashboard.generate();
 }
 
 /**
@@ -234,8 +237,8 @@ function shouldHide(model, metric) {
 function getLabel(model, metric) {
   for (let serie of model.series) {
     if (serie.name && serie.metric == metric.name) return serie.name;
-	}
-	return metric.name;
+  }
+  return metric.name;
 }
 
 /**
@@ -257,7 +260,7 @@ function setGrafanaRest(axiosWrapper) {
 }
 
 /**
- * Export all methods and variables
+ * Export methods and variables
  */
 module.exports = {
   // Global Variables
@@ -265,12 +268,6 @@ module.exports = {
   grafanaDataSources,
   // Global Methods
   processKscXml,
-  processKscConfiguration,
-  fetchDataSources,
-  fetchGraph,
-  fetchGraphTemplates,
-  saveDashboard,
-  getOnmsPerformanceDataSource,
   processReport,
   addPanel,
   shouldHide,

@@ -10,14 +10,21 @@ It won't generate the graphs exactly as they are displayed by [RRDtool](https://
 
 It is recommended to use [NodeJS](https://nodejs.org/en/) version 8 or greater with this project, as the code uses several ES6/ES7 features.
 
-```SHELL
+```shell
 npm install
 npm link
 ```
 
+To run the tests:
+
+```shell
+npm install
+npm test
+```
+
 ## Usage
 
-```SHELL
+```shell
 $ ksc2grafana 
 
   Usage: ksc2grafana [options] <ksc_reports_config_file>
