@@ -51,8 +51,8 @@ async function processKscConfiguration(ksc) {
 
     // Processing each KSC report
     let promises = [];
-    ksc.ReportsList.Report.forEach(r => {
-      const dashboard = processReport(r);
+    ksc.ReportsList.Report.forEach(report => {
+      const dashboard = createDashboard(report);
       promises.push(saveDashboard(dashboard));
     });
     return Promise.all(promises);
@@ -120,11 +120,12 @@ async function saveDashboard(dashboard) {
 }
 
 /**
- * Generates and save a Grafana Dashboard object for a given KSC report
+ * Creates a Grafana Dashboard object for a given KSC report
  * 
  * @param {object} report The KSC report object
+ * @returns {object} The Grafana dashboard object
  */
-function processReport(report) {
+function createDashboard(report) {
   const title = report['$'].title;
   console.log(`Creating dashboard for report ${title}...`);
   var graphsPerLine = parseInt(report['$'].graphs_per_line);
@@ -136,7 +137,8 @@ function processReport(report) {
     var row = new grafana.Row({ title: `KSC Row ${r}`, showTitle: false });
     for (var i=0; i<graphsPerLine; i++) {
       if (graphNum < report.Graph.length) {
-        addPanel(row, report.Graph[graphNum]['$'], Math.floor(12/graphsPerLine));
+        const panel = createPanel(report.Graph[graphNum]['$'], Math.floor(12/graphsPerLine));
+        row.addPanel(panel);
         graphNum++;
       }
     }
@@ -159,15 +161,16 @@ function getOnmsPerformanceDataSource() {
 }
 
 /**
- * Adds a Grafana Panel to a given Row.
+ * Creates a Grafana Panel.
  * TODO Set colors based on model.series.
  * TODO Set Y-Axis Label based on model.verticalLabel.
  * 
  * @param {object} row The Grafana Row object to include the Graph Panel
  * @param {object} graph The KSC Graph object
  * @param {number} span The amount of columns to expand (12 is the maximum) 
+ * @returns {object} The Grafana Panel object
  */
-function addPanel(row, graph, span) {
+function createPanel(graph, span) {
   var rrdGraphConverter = new Backshift.Utilities.RrdGraphConverter({
     graphDef: onmsGraphTemplates[graph.graphtype],
     resourceId: graph.resourceId
@@ -210,7 +213,7 @@ function addPanel(row, graph, span) {
       });
     }
   });
-  row.addPanel(panel);
+  return panel;
 }
 
 /**
@@ -268,8 +271,8 @@ module.exports = {
   grafanaDataSources,
   // Global Methods
   processKscXml,
-  processReport,
-  addPanel,
+  createDashboard,
+  createPanel,
   shouldHide,
   getLabel,
   setOnmsRest,

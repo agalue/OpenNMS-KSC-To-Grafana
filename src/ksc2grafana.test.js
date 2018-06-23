@@ -4,8 +4,7 @@
 
 'use strict';
 
-const app     = require('./ksc2grafana');
-const grafana = require('grafana-dash-gen');
+const app = require('./ksc2grafana');
 
 const mib2HcBits_graph = {
   name: 'mib2.HCbits',
@@ -156,20 +155,18 @@ test('Testing method getLabel', () => {
   expect(app.getLabel(model, {name: 'test3'})).toBe('test3');
 });
 
-test('Testing method addPanel', () => {
+test('Testing method createPanel', () => {
   app.grafanaDataSources = grafana_datasources;
   const graph = {
     graphtype: 'mib2.HCbits',
     resourceId: 'node[1].interfaceSnmp[eth0]',
     title: 'Main Interface'
   };
-  const row = new grafana.Row();
-  app.addPanel(row, graph, 6);
-  expect(row.panels.length).toBe(1);
-  expect(row.panels[0].state.title).toBe(graph.title);
+  const panel = app.createPanel(graph, 6);
+  expect(panel.state.title).toBe(graph.title);
 
   // FIXME Validate Targets
-  //console.dir(row.panels[0].state.targets);
+  //console.dir(panel.state.targets);
 });
 
 test('Testing method processKscXml', async() => {
