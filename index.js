@@ -58,6 +58,7 @@ async function main (configFile, cmd) {
   try {
     await ksc2grafana.processKscXml(configFile);
   } catch (error) {
-    console.error(`Something unexpected has happened while processing the KSC report, due to ${error.message}...`);
+    console.error('Something unexpected has happened while processing the KSC report');
+    console.error(error);
   }
 }

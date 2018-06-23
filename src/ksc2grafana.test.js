@@ -203,12 +203,76 @@ test('Testing method processKscXml', async() => {
   await app.processKscXml('./resources/ksc-performance-reports.xml');
 });
 
-test('Testing method processKscXml - Invalid file', async() => {
-  expect.assertions(1);
+test('Testing method processKscXml - unexisting file', async() => {
+  expect.assertions(2);
   try {
-    await app.processKscXml('./invalid-file.xml');
+    await app.processKscXml('./unexisting-file.xml');
   } catch (error) {
-    console.log(error.message);
+    expect(error).toBeDefined();
     expect(error.code).toBe('ENOENT');
+    console.log(error.message);
+  }
+});
+
+test('Testing method processKscXml - invalid file', async() => {
+  expect.assertions(2);
+  // Valid XML, but non valid KSC Configuration file.
+  try {
+    await app.processKscXml('./resources/invalid-file-1.xml');
+  } catch (error) {
+    expect(error).toBeDefined();
+    console.log(error.message);
+  }
+  // Invalid XML (testing xml2js errors)
+  try {
+    await app.processKscXml('./resources/invalid-file-2.xml');
+  } catch (error) {
+    expect(error).toBeDefined();
+    console.log(error.message);
+  }
+});
+
+test('Testing method processKscXml - No Grafana Server', async() => {
+  expect.assertions(2);
+
+  app.setGrafanaRest({
+    get: () => {
+      return Promise.reject({status: 500, message: 'Grafana server not found'});
+    }
+  });
+
+  try {
+    await app.processKscXml('./resources/ksc-performance-reports.xml');
+  } catch (error) {
+    expect(error).toBeDefined();
+    expect(error.message).toBe('Grafana server not found');
+    console.log(error.message);
+  }
+});
+
+test('Testing method processKscXml - No OpenNMS Server', async() => {
+  expect.assertions(2);
+
+  app.setGrafanaRest({
+    get: url => {
+      if (url === '/api/datasources') {
+        return Promise.resolve({status: 200, data: grafana_datasources});
+      }
+      return Promise.reject();
+    }
+  });
+
+  app.setOnmsRest({
+    get: () => {
+      return Promise.reject({status: 500, message: 'OpenNMS server not found'});
+    }
+  });
+
+  try {
+    await app.processKscXml('./resources/ksc-performance-reports.xml');
+  } catch (error) {
+    expect(error).toBeDefined();
+    expect(error.message).toBe('OpenNMS server not found');
+    console.log(error.message);
   }
 });

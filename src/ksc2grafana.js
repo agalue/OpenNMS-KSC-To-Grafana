@@ -30,7 +30,7 @@ let grafanaDataSources = [];
  async function processKscXml(configFile) {
   const xml = await fs.readFileSync(configFile);
   const ksc = await xml2js(xml);
-  if (!ksc['ReportsList']) throw 'The provided XML is not a KSC Configuration XML file.';
+  if (!ksc['ReportsList']) throw new Error('The provided XML is not a KSC Configuration XML file.');
   return processKscConfiguration(ksc);
 }
 
@@ -43,19 +43,17 @@ let grafanaDataSources = [];
 async function processKscConfiguration(ksc) {
   // Asynchronously initialize global variable with the Grafana data sources 
   grafanaDataSources = await fetchDataSources();
-  if (getOnmsPerformanceDataSource() === null) throw 'There is no Helm performance data source.';
+  if (getOnmsPerformanceDataSource() === null) throw new Error('There is no Helm performance data source. Please configure one in Grafana');
 
   if (ksc.ReportsList.Report) {
     // Asynchronously initialize global variable with the OpenNMS graph templates used by the reports
     onmsGraphTemplates = await fetchGraphTemplates(ksc);
 
     // Processing each KSC report
-    let promises = [];
-    ksc.ReportsList.Report.forEach(report => {
+    for (let report of ksc.ReportsList.Report) {
       const dashboard = createDashboard(report);
-      promises.push(saveDashboard(dashboard));
-    });
-    return Promise.all(promises);
+      await saveDashboard(dashboard);
+    }
   } else {
     console.warn('WARN: There are no reports on the configuration file.');
   }
