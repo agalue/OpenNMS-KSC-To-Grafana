@@ -6,7 +6,7 @@
   "author": "Alejandro Galue <agalue@opennms.org>",
   "license": "MIT",
   "bin": {
-    "ksc2grafana": "./ksc2grafana.js"
+    "ksc2grafana": "./index.js"
   },
   "keywords": [
     "opennms",
@@ -21,6 +21,13 @@
     "backshift": "https://github.com/OpenNMS/backshift.git#master",
     "commander": "^2.15.1",
     "grafana-dash-gen": "^2.5.0",
-    "xml2js": "^0.4.19"
+    "node-xml2js-promise": "^1.1.1"
+  },
+  "devDependencies": {
+    "eslint": "^4.19.1",
+    "jest": "^23.1.0"
+  },
+  "scripts": {
+    "test": "jest"
   }
 }

@@ -1,0 +1,5 @@
+<Reports xmlns="http://xmlns.opennms.org/xsd/config/kscReports">
+   <Report id="0" title="Sample" show_timespan_button="false" show_graphtype_button="false" graphs_per_line="1">
+      <Graph title="Throughput" resourceId="node[Office:default-gateway].interfaceSnmp[vlan_0-a8d0e5a0a490]" timespan="7_day" graphtype="mib2.HCbits"/>
+   </Report>
+</Reports>
