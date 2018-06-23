@@ -28,7 +28,7 @@ let grafanaDataSources = [];
  * @returns {Promise} A promise
  */
  async function processKscXml(configFile) {
-  const xml = fs.readFileSync(configFile);
+  const xml = await fs.readFileSync(configFile);
   const ksc = await xml2js(xml);
   if (!ksc['ReportsList']) throw 'The provided XML is not a KSC Configuration XML file.';
   return processKscConfiguration(ksc);

@@ -202,3 +202,13 @@ test('Testing method processKscXml', async() => {
 
   await app.processKscXml('./resources/ksc-performance-reports.xml');
 });
+
+test('Testing method processKscXml - Invalid file', async() => {
+  expect.assertions(1);
+  try {
+    await app.processKscXml('./invalid-file.xml');
+  } catch (error) {
+    console.log(error.message);
+    expect(error.code).toBe('ENOENT');
+  }
+});

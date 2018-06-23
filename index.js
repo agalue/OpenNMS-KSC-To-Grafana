@@ -34,7 +34,7 @@ if (!program.args.length) {
  * @param {string} configFile The KSC Report configuration file name
  * @param {object} cmd The commander object
  */
-function main (configFile, cmd) {
+async function main (configFile, cmd) {
 
   // Initializing global Axios wrapper for the OpenNMS ReST API
   ksc2grafana.setOnmsRest(axios.create({
@@ -56,9 +56,8 @@ function main (configFile, cmd) {
 
   // Processing KSC Configuration XML
   try {
-    ksc2grafana.processKscXml(configFile);
+    await ksc2grafana.processKscXml(configFile);
   } catch (error) {
-    console.error('Something unexpected has happened while processing the KSC report...');
-    console.dir(error);
+    console.error(`Something unexpected has happened while processing the KSC report, due to ${error.message}...`);
   }
 }
