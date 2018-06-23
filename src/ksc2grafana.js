@@ -1,18 +1,16 @@
-#!/usr/bin/env node
-
-/* @author Alejandro Galue <agalue@opennms.org> */
+/**
+ * @author Alejandro Galue <agalue@opennms.org>
+ */
 
 'use strict';
 
-const pkg     = require('./package.json');
 const fs      = require('fs');
 const vm      = require('vm');
-const xml2js  = require('xml2js');
-const axios   = require('axios');
-const cli     = require('commander');
+const xml2js  = require('node-xml2js-promise');
 const grafana = require('grafana-dash-gen');
 
 // The following is the only way to instantiate Backshift classes within NodeJS
+// The path is relative to the project directory; or, process.cwd()
 
 vm.runInThisContext(fs.readFileSync('./node_modules/backshift/dist/backshift.onms.js'));
 
@@ -21,110 +19,40 @@ vm.runInThisContext(fs.readFileSync('./node_modules/backshift/dist/backshift.onm
 let onmsRest = undefined;
 let grafanaRest = undefined;
 let onmsGraphTemplates = {};
-let grafanaDataSources = {};
-
-cli.version(pkg.version)
-   .arguments('<ksc_reports_config_file>')
-   .description('Convert OpenNMS KSC Reports to Grafana Dashboards')
-   .option('-h, --onms_url <onms_url>','OpenNMS IP or Hostname', 'http://localhost:8980/opennms')
-   .option('-u, --onms_user <onms_user>','OpenNMS ReST API user name', 'admin')
-   .option('-p, --onms_passwd <onms_passwd>','OpenNMS ReST API user password', 'admin')
-   .option('-H, --grafana_url <grafana_url>','Grafana IP or Hostname', 'http://localhost:3000')
-   .option('-U, --grafana_user <grafana_user>','Grafana ReST API user name', 'admin')
-   .option('-P, --grafana_passwd <grafana_passwd>','Grafana ReST API user password', 'admin')
-   .action(main)
-   .parse(process.argv);
-
-if (!cli.args.length) {
-  cli.help();
-  exit;
-}
+let grafanaDataSources = [];
 
 /**
- * Main method
+ * Processes KSC Configuration XML.
  * 
- * @param {string} configFile The KSC Report configuration file name
- * @param {object} cmd The commander object
+ * @param {string} configFile XML config file name
+ * @returns {Promise} A promise
  */
-function main (configFile, cmd) {
-
-  // Initializing global Axios wrapper for the OpenNMS ReST API
-  onmsRest = axios.create({
-    baseURL: cmd.onms_url,
-    auth: {
-      username: cmd.onms_user,
-      password: cmd.onms_passwd
-    }
-  });
-
-  // Initializing global Axios wrapper for the Grafana ReST API
-  grafanaRest = axios.create({
-    baseURL: cmd.grafana_url,
-    auth: {
-      username: cmd.grafana_user,
-      password: cmd.grafana_passwd
-    }
-  });
-
-  // Processing KSC Configuration XML
-  fs.readFile(configFile, (err, data) => {
-    if (err) {
-      console.error('ERROR: Cannot read config file because...');
-      console.error(err.message);
-    } else {
-      const parser = new xml2js.Parser();
-      parser.parseString(data, async(err, ksc) => {
-        if (err) {
-          console.error('ERROR: Cannot parse KSC Configuration XML because...');
-          console.error(err.message);
-          return;
-        } else {
-          if (!ksc['ReportsList']) {
-            console.error('ERROR: The provided XML is not a KSC Configuration XML file.');
-            return;
-          } else {
-            await processKscConfiguration(ksc);
-          }
-        }
-      });
-    }
-  });
+ async function processKscXml(configFile) {
+  const xml = fs.readFileSync(configFile);
+  const ksc = await xml2js(xml);
+  if (!ksc['ReportsList']) throw 'The provided XML is not a KSC Configuration XML file.';
+  return processKscConfiguration(ksc);
 }
 
 /**
- * Processes KSC Configuration.
+ * Processes KSC Configuration object.
  * 
- * @param {object} ksc 
+ * @param {object} ksc The KSC configuration object
+ * @returns {Promise} A promise
  */
 async function processKscConfiguration(ksc) {
   // Asynchronously initialize global variable with the Grafana data sources 
-  try {
-    grafanaDataSources = await fetchDataSources();
-    if (getOnmsPerformanceDataSource() === null) throw 'There is no Helm performance data source.';
-  } catch (error) {
-    console.error('ERROR: cannot retrieve data sources from Grafana because...');
-    console.error(error.message);
-    return;
-  }
+  grafanaDataSources = await fetchDataSources();
+  if (getOnmsPerformanceDataSource() === null) throw 'There is no Helm performance data source.';
 
   if (ksc.ReportsList.Report) {
     // Asynchronously initialize global variable with the OpenNMS graph templates used by the reports
-    try {
-      onmsGraphTemplates = await fetchGraphTemplates(ksc);
-    } catch (error) {
-      console.error('ERROR: Cannot retrieve graph template because...');
-      console.error(error.message);
-      return;
-    }
+    onmsGraphTemplates = await fetchGraphTemplates(ksc);
 
     // Processing each KSC report
-    try {
-      ksc.ReportsList.Report.forEach(r => processReport(r));  
-    } catch (error) {
-      console.error('ERROR: Cannot process reports because...');
-      console.error(error.message);
-      return;
-    }
+    let promises  = [];
+    ksc.ReportsList.Report.forEach(r => promises.push(processReport(r)));
+    return Promise.all(promises);
   } else {
     console.warn('WARN: There are no reports on the configuration file.');
   }
@@ -147,7 +75,7 @@ async function fetchDataSources() {
  * @returns {Promise} A promise with the HTTP response object
  */
 async function fetchGraph(graph) {
-  console.log(`Getting template for ${graph}`);
+  console.log(`Getting template for ${graph}...`);
   return onmsRest.get(`/rest/graphs/${graph}`);
 }
 
@@ -180,16 +108,38 @@ async function saveDashboard(dashboard) {
     folderId: 0,
     override: true
   };
-  try {
-    const response = await grafanaRest.post('/api/dashboards/db', request);
-    if (response.status === 200) {
-      const data = response.data;
-      console.log(`Dashboard created; id=${data.id}, uid=${data.uid}, url=${data.url}`);
-    }
-  } catch (error) {
-    console.error('ERROR: cannot save grafana dashboard because...');
-    console.error(error.response.data.message);
+  console.log('Saving dashboard...');
+  const response = await grafanaRest.post('/api/dashboards/db', request);
+  if (response.status === 200 && response.data) {
+    const data = response.data;
+    console.log(`Dashboard created; id=${data.id}, uid=${data.uid}, url=${data.url}`);
   }
+}
+
+/**
+ * Generates and save a Grafana Dashboard object for a given KSC report
+ * 
+ * @param {object} report The KSC report object
+ */
+async function processReport(report) {
+  const title = report['$'].title;
+  console.log(`Creating dashboard for report ${title}...`);
+  var graphsPerLine = parseInt(report['$'].graphs_per_line);
+  if (graphsPerLine === 0) graphsPerLine++;
+  var totalRows = Math.ceil(report.Graph.length / graphsPerLine);
+  var dashboard = new grafana.Dashboard({ title });
+  var graphNum = 0;
+  for (var r=0; r<totalRows; r++) {
+    var row = new grafana.Row({ title: `KSC Row ${r}`, showTitle: false });
+    for (var i=0; i<graphsPerLine; i++) {
+      if (graphNum < report.Graph.length) {
+        addPanel(row, report.Graph[graphNum]['$'], Math.floor(12/graphsPerLine));
+        graphNum++;
+      }
+    }
+    dashboard.addRow(row);
+  }
+  return saveDashboard(dashboard.generate());
 }
 
 /**
@@ -203,35 +153,6 @@ function getOnmsPerformanceDataSource() {
     if (ds.type === 'opennms-helm-performance-datasource') return ds.name;
   }
   return null;
-}
-
-// * Generate a JSON representation of the Grafana Dashboard for each KSC report
-// * Save the dashboard to Grafana
-
-/**
- * Generates and save a Grafana Dashboard object for a given KSC report
- * 
- * @param {object} report The KSC report object
- */
-function processReport(report) {
-  const title = report['$'].title;
-  console.log(`Creating dashboard for report ${title}...`);
-  var graphsPerLine = parseInt(report['$'].graphs_per_line);
-  if (graphsPerLine === 0) graphsPerLine++;
-  var totalRows = Math.ceil(report.Graph.length / graphsPerLine);
-  var dashboard = new grafana.Dashboard({ title });
-  var graphNum = 0;
-  for (var r=0; r<=totalRows; r++) {
-    var row = new grafana.Row({ showTitle: false });
-    for (var i=0; i<graphsPerLine; i++) {
-      if (graphNum < report.Graph.length) {
-        addPanel(row, report.Graph[graphNum]['$'], Math.floor(12/graphsPerLine));
-        graphNum++;
-      }
-    }
-    dashboard.addRow(row);
-  }
-  saveDashboard(dashboard.generate());
 }
 
 /**
@@ -312,7 +233,48 @@ function shouldHide(model, metric) {
  */
 function getLabel(model, metric) {
   for (let serie of model.series) {
-    if (serie.metric == metric.name && serie.name) return serie.name;
+    if (serie.name && serie.metric == metric.name) return serie.name;
 	}
 	return metric.name;
 }
+
+/**
+ * Sets the Axios Wrapper to process HTTP requests against the OpenNMS ReST API
+ * 
+ * @param {object} axiosWrapper The Acios wrapper object
+ */
+function setOnmsRest(axiosWrapper) {
+  onmsRest = axiosWrapper;
+}
+
+/**
+ * Sets the Axios Wrapper to process HTTP requests against the Grafana ReST API
+ * 
+ * @param {object} axiosWrapper The Acios wrapper object
+ */
+function setGrafanaRest(axiosWrapper) {
+  grafanaRest = axiosWrapper;
+}
+
+/**
+ * Export all methods and variables
+ */
+module.exports = {
+  // Global Variables
+  onmsGraphTemplates,
+  grafanaDataSources,
+  // Global Methods
+  processKscXml,
+  processKscConfiguration,
+  fetchDataSources,
+  fetchGraph,
+  fetchGraphTemplates,
+  saveDashboard,
+  getOnmsPerformanceDataSource,
+  processReport,
+  addPanel,
+  shouldHide,
+  getLabel,
+  setOnmsRest,
+  setGrafanaRest
+};
