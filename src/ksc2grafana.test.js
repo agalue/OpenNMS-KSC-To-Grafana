@@ -6,6 +6,12 @@
 
 const app = require('./ksc2grafana');
 
+const ksc_graph = {
+  graphtype: 'mib2.HCbits',
+  resourceId: 'node[Office:default-gateway].interfaceSnmp[vlan_0-a8d0e5a0a490]',
+  title: 'Main Interface'
+};
+
 const mib2HcBits_graph = {
   name: 'mib2.HCbits',
   title: 'Bits In/Out (High Speed)',
@@ -149,18 +155,13 @@ test('Testing method getTargetLabel', () => {
 
 test('Testing method createPanel', () => {
   app.grafanaDataSources = grafana_datasources;
-  const graph = {
-    graphtype: 'mib2.HCbits',
-    resourceId: 'node[1].interfaceSnmp[eth0]',
-    title: 'Main Interface'
-  };
-  const panel = app.createPanel(graph, 6);
-  expect(panel.state.title).toBe(graph.title);
+  const panel = app.createPanel(ksc_graph, 6);
+  expect(panel.state.title).toBe(ksc_graph.title);
   panel.state.targets.filter(t => t.type == 'attribute').forEach(t => {
     expect(t.nodeId).toBe('Office:default-gateway');
     expect(t.resourceId).toBe('interfaceSnmp[vlan_0-a8d0e5a0a490]');
   });
-  const visible =   panel.state.targets.filter(t => !t.hide).length;
+  const visible = panel.state.targets.filter(t => !t.hide).length;
   expect(visible).toBe(2);
 });
 
