@@ -115,7 +115,6 @@ const grafana_datasources = [{
 }];
 
 // Mock Object for Backshift.Utilities.RrdGraphConverter
-
 global.Backshift = {
   Utilities: {
     RrdGraphConverter: function(graphDef, resourceId) {
@@ -126,33 +125,26 @@ global.Backshift = {
   }
 };
 
+const getMetric = (metricName) => {
+  for (let m of mib2HCbits_model.metrics) {
+    if (m.name == metricName) return m;
+  }
+  return undefined;
+};
+
 beforeEach(() => {
   app.onmsGraphTemplates = {};
   app.grafanaDataSources = [];
 });
 
-test('Testing method shouldHide', () => {
-  const model = {
-    series: [
-      { metric: 'test1', name: 'Test 1' },
-      { metric: 'test2' }
-    ]
-  };
-  expect(app.shouldHide(model, {name: 'test1'})).toBe(false);
-  expect(app.shouldHide(model, {name: 'test2'})).toBe(true);
-  expect(app.shouldHide(model, {name: 'test3'})).toBe(true);
+test('Testing method shouldHideTarget', () => {
+ expect(app.shouldHideTarget(mib2HCbits_model, getMetric('rawbitsIn'))).toBe(false);
+ expect(app.shouldHideTarget(mib2HCbits_model, getMetric('octIn'))).toBe(true);
 });
 
-test('Testing method getLabel', () => {
-  const model = {
-    series: [
-      { metric: 'test1', name: 'Test 1' },
-      { metric: 'test2' }
-    ]
-  };
-  expect(app.getLabel(model, {name: 'test1'})).toBe('Test 1');
-  expect(app.getLabel(model, {name: 'test2'})).toBe('test2');
-  expect(app.getLabel(model, {name: 'test3'})).toBe('test3');
+test('Testing method getTargetLabel', () => {
+  expect(app.getTargetLabel(mib2HCbits_model, getMetric('rawbitsIn'))).toBe('In');
+  expect(app.getTargetLabel(mib2HCbits_model, getMetric('octIn'))).toBe('octIn');
 });
 
 test('Testing method createPanel', () => {
@@ -164,9 +156,12 @@ test('Testing method createPanel', () => {
   };
   const panel = app.createPanel(graph, 6);
   expect(panel.state.title).toBe(graph.title);
-
-  // FIXME Validate Targets
-  //console.dir(panel.state.targets);
+  panel.state.targets.filter(t => t.type == 'attribute').forEach(t => {
+    expect(t.nodeId).toBe('Office:default-gateway');
+    expect(t.resourceId).toBe('interfaceSnmp[vlan_0-a8d0e5a0a490]');
+  });
+  const visible =   panel.state.targets.filter(t => !t.hide).length;
+  expect(visible).toBe(2);
 });
 
 test('Testing method processKscXml', async() => {
@@ -191,7 +186,6 @@ test('Testing method processKscXml', async() => {
     post: (url, data) => {
       if (url === '/api/dashboards/db') {
         const rows = data.dashboard.rows;
-        console.dir(rows);
         expect(rows.length).toBe(1);
         expect(rows[0].panels.length).toBe(1);
         return Promise.resolve({status: 200, data: { id: 1, uid: 1, url: '/dashboard/1' } });  
@@ -210,7 +204,6 @@ test('Testing method processKscXml - unexisting file', async() => {
   } catch (error) {
     expect(error).toBeDefined();
     expect(error.code).toBe('ENOENT');
-    console.log(error.message);
   }
 });
 
@@ -220,15 +213,13 @@ test('Testing method processKscXml - invalid file', async() => {
   try {
     await app.processKscXml('./resources/invalid-file-1.xml');
   } catch (error) {
-    expect(error).toBeDefined();
-    console.log(error.message);
+    expect(error.message).toBe('The provided XML is not a KSC Configuration XML file.');
   }
   // Invalid XML (testing xml2js errors)
   try {
     await app.processKscXml('./resources/invalid-file-2.xml');
   } catch (error) {
-    expect(error).toBeDefined();
-    console.log(error.message);
+    expect(error.message).toMatch(/Unexpected close tag/);
   }
 });
 
@@ -246,7 +237,6 @@ test('Testing method processKscXml - No Grafana Server', async() => {
   } catch (error) {
     expect(error).toBeDefined();
     expect(error.message).toBe('Grafana server not found');
-    console.log(error.message);
   }
 });
 
@@ -273,6 +263,5 @@ test('Testing method processKscXml - No OpenNMS Server', async() => {
   } catch (error) {
     expect(error).toBeDefined();
     expect(error.message).toBe('OpenNMS server not found');
-    console.log(error.message);
   }
 });

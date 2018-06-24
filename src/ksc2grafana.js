@@ -193,21 +193,21 @@ function createPanel(graph, span) {
       if (reMatch !== null) {
         panel.state.targets.push({
           type: 'attribute',
-          label: getLabel(model,metric),
+          label: getTargetLabel(model,metric),
           nodeId: reMatch[1],
           resourceId: reMatch[2],
           attribute: metric.attribute,
           aggregation: metric.aggregation,
-          hide: shouldHide(model, metric)
+          hide: shouldHideTarget(model, metric)
         });
       }
     }
     if ('expression' in metric) {
       panel.state.targets.push({
         type: 'expression',
-        label: getLabel(model,metric),
+        label: getTargetLabel(model,metric),
         expression: metric.expression,
-        hide: shouldHide(model, metric)
+        hide: shouldHideTarget(model, metric)
       });
     }
   });
@@ -219,9 +219,9 @@ function createPanel(graph, span) {
  * 
  * @param {object} model The graph model object
  * @param {object} metric The metric object
- * @returns {boolean} true if the metric should be hidden
+ * @returns {boolean} true if the target should be hidden
  */
-function shouldHide(model, metric) {
+function shouldHideTarget(model, metric) {
   for (let serie of model.series) {
     if (serie.name && serie.metric == metric.name) return false;
   }
@@ -233,9 +233,9 @@ function shouldHide(model, metric) {
  * 
  * @param {object} model The graph model object
  * @param {object} metric The metric object
- * @returns {string} The label to use for the current metric
+ * @returns {string} The label to use for the  target
  */
-function getLabel(model, metric) {
+function getTargetLabel(model, metric) {
   for (let serie of model.series) {
     if (serie.name && serie.metric == metric.name) return serie.name;
   }
@@ -271,8 +271,8 @@ module.exports = {
   processKscXml,
   createDashboard,
   createPanel,
-  shouldHide,
-  getLabel,
+  shouldHideTarget,
+  getTargetLabel,
   setOnmsRest,
   setGrafanaRest
 };
