@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/agalue/OpenNMS-Node-Page-Extensions.svg?style=svg)](https://circleci.com/gh/agalue/OpenNMS-Node-Page-Extensions)
+
 # OpenNMS-KSC-To-Grafana
 
 Convert [OpenNMS](https://opennms.org/) KSC Reports to [Grafana](https://grafana.com/) Dashboards.
@@ -18,7 +20,6 @@ npm link
 To run the tests:
 
 ```shell
-npm install
 npm test
 ```
 
