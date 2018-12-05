@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/agalue/OpenNMS-Node-Page-Extensions.svg?style=svg)](https://circleci.com/gh/agalue/OpenNMS-Node-Page-Extensions)
+[![CircleCI](https://circleci.com/gh/agalue/OpenNMS-KSC-To-Grafana.svg?style=svg)]
 
 # OpenNMS-KSC-To-Grafana
 
