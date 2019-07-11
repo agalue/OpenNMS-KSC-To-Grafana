@@ -17,15 +17,15 @@
     "url": "https://github.com/agalue/OpenNMS-KSC-To-Grafana.git"
   },
   "dependencies": {
-    "axios": "^0.18.0",
+    "axios": "^0.19.0",
     "backshift": "https://github.com/OpenNMS/backshift.git#master",
-    "commander": "^2.17.1",
-    "grafana-dash-gen": "^2.5.0",
+    "commander": "^2.20.0",
+    "grafana-dash-gen": "^3.0.0",
     "node-xml2js-promise": "^1.1.1"
   },
   "devDependencies": {
-    "eslint": "^5.3.0",
-    "jest": "^23.4.2"
+    "eslint": "^6.0.1",
+    "jest": "^24.8.0"
   },
   "scripts": {
     "test": "jest"
