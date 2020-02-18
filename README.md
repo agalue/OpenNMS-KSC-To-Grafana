@@ -4,7 +4,7 @@
 
 Convert [OpenNMS](https://opennms.org/) KSC Reports to [Grafana](https://grafana.com/) Dashboards.
 
-Tested against Grafana 4.x and 5.x; although the tool provides information about the generated dashboard on the standard output only on Grafana 5.x.
+Tested against Grafana 4.x, 5.x and 6.x; although the tool provides information about the generated dashboard on the standard output only on Grafana 5.x or newer.
 
 It won't generate the graphs exactly as they are displayed by [RRDtool](https://oss.oetiker.ch/rrdtool/) or [Backshift](https://github.com/OpenNMS/backshift), as Grafana works on a different way, but the resulting charts should look very similar.
 
