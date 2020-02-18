@@ -27,8 +27,8 @@ let grafanaDataSources = [];
  * @param {string} configFile XML config file name
  * @returns {Promise} A promise
  */
- async function processKscXml(configFile) {
-  const xml = await fs.readFileSync(configFile);
+async function processKscXml(configFile) {
+  const xml = fs.readFileSync(configFile);
   const ksc = await xml2js(xml);
   if (!ksc['ReportsList']) throw new Error('The provided XML is not a KSC Configuration XML file.');
   return processKscConfiguration(ksc);
@@ -52,7 +52,9 @@ async function processKscConfiguration(ksc) {
     // Processing each KSC report
     for (let report of ksc.ReportsList.Report) {
       const dashboard = createDashboard(report);
-      await saveDashboard(dashboard);
+      if (dashboard) {
+        await saveDashboard(dashboard);
+      }
     }
   } else {
     console.warn('WARN: There are no reports on the configuration file.');
@@ -89,7 +91,9 @@ async function fetchGraph(graph) {
  */
 async function fetchGraphTemplates(ksc) {
   let graphs = new Set();
-  ksc.ReportsList.Report.forEach(r => r.Graph.forEach(g => graphs.add(g['$'].graphtype)));
+  ksc.ReportsList.Report.forEach(r => {
+    if (r.Graph) { r.Graph.forEach(g => graphs.add(g['$'].graphtype)); }
+  });
   let promises  = [];
   graphs.forEach(g => promises.push(fetchGraph(g)));
   let responses = await Promise.all(promises);
@@ -124,6 +128,9 @@ async function saveDashboard(dashboard) {
  * @returns {object} The Grafana dashboard object
  */
 function createDashboard(report) {
+  if (!report.Graph) {
+    return undefined;
+  }
   const title = report['$'].title;
   console.log(`Creating dashboard for report ${title}...`);
   var graphsPerLine = parseInt(report['$'].graphs_per_line);
