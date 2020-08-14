@@ -19,13 +19,13 @@
   "dependencies": {
     "axios": "^0.19.2",
     "backshift": "https://github.com/OpenNMS/backshift.git#master",
-    "commander": "^4.1.1",
-    "grafana-dash-gen": "^3.0.0",
+    "commander": "^6.0.0",
+    "grafana-dash-gen": "^3.2.0",
     "node-xml2js-promise": "^1.1.1"
   },
   "devDependencies": {
-    "eslint": "^6.8.0",
-    "jest": "^25.1.0"
+    "eslint": "^7.6.0",
+    "jest": "^26.4.0"
   },
   "scripts": {
     "test": "jest"

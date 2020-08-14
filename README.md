@@ -51,3 +51,5 @@ All the options are optional, and they have to be overriden if the script is exe
 ## Future enhancements
 
 * Use the information available on the template model to add the title for the Y-Axis, the colors for the series, and the series type (line, area, etc.)
+* Verify if there is a Dashboard with the same name, if so, show an error and exit.
+* Add a flag to override the content of the Dashboard if there is one with the same name.
